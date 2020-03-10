@@ -52,6 +52,19 @@ docker-compose up -d portus && docker-compose logs -f portus
 
 ```
 
+* Now, the `/init` script is waiting for database to be reachable,
+* So open a new shell session, change directory to the directory where your `docker-compose.yml` is, and execute this :
+
+```bash
+export WORK_FOLDER=~/.buildfromsrc.portus
+cd $WORK_FOLDER
+
+docker-compose exec -T portus bash -c 'bundler exec "pumactl -F /srv/Portus/config/puma.rb start"'
+# docker exec -it portus-build-from-source_portus_1 bash -c 'bundler exec "pumactl -F /srv/Portus/config/puma.rb start"'
+```
+
+* You just started `Portus`, and it is just complaining about a few things, like you don't have a database. And inideed, there isno database, but you tested Portus actually starts.
+
 # Building `portusctl` from source
 
 
