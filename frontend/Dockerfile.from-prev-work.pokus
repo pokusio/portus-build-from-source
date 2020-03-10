@@ -1,0 +1,52 @@
+FROM ruby:2.5.0
+# FROM ruby:2.4
+
+# see update.sh for why all "apt-get install"s have to stay as one long line
+RUN apt-get update -y && apt-get install -y nodejs --no-install-recommends && rm -rf /var/lib/apt/lists/*
+
+# see http://guides.rubyonrails.org/command_line.html#rails-dbconsole
+# RUN apt-get update -y && apt-get install -y mysql-client postgresql-client sqlite3 --no-install-recommends && rm -rf /var/lib/apt/lists/*
+# because in debian buster the package name is 'default-mysql-client'
+# https://packages.debian.org/search?searchon=names&keywords=mysql-client
+RUN apt-get update -y && apt-get install -y default-mysql-client postgresql-client sqlite3 --no-install-recommends && rm -rf /var/lib/apt/lists/*
+
+# Dependencies of [/usr/src/portuslab/build/generate_secret_key_base.sh]
+RUN apt-get update -y && apt-get install -y jq
+
+#
+ARG RUBY_VERSION=2.5.0
+# ENV RUBY_VERSION=2.5.0
+
+ARG RAILS_VERSION=5.0.1
+ENV RAILS_VERSION 5.0.1
+
+ENV VAULT_TOKEN_FILE=$VAULT_TOKEN_FILE
+# ARG PORTUS_SECRET_KEY_BASE_FILE_NAME
+ENV PORTUS_SECRET_KEY_BASE_FILE_NAME=$PORTUS_SECRET_KEY_BASE_FILE_NAME
+
+RUN gem install rails --version "$RAILS_VERSION"
+
+# folder used to do the generation work
+RUN mkdir -p /usr/src/portuslab/build
+
+# folder used to share the generation work
+RUN mkdir -p /usr/src/portuslab/share
+VOLUME /usr/src/portuslab/share
+
+# 
+# ICI IL FAUT RECUPERER LE LIVRABLE PORTUS AU LIEU DE FAIRE UN NOUVEAU PROJET PORTUS.
+RUN rails new --skip-bundle /usr/src/portuslab/build
+COPY generate_secret_key_base.sh /usr/src/portuslab/build
+RUN chmod +x /usr/src/portuslab/build/generate_secret_key_base.sh
+RUN pwd && ls -allh /usr/src/portuslab/build
+RUN echo "ensuite dans [$(pwd)] "
+WORKDIR /usr/src/portuslab/build
+USER root
+RUN gem install rake -v '13.0.1'
+RUN pwd && ls -allh .
+RUN bundle install
+
+
+# CMD ["/bin/bash"]
+# CMD ["/usr/local/bundle/bin/rails", "secret"]
+CMD ["/usr/src/portuslab/build/generate_secret_key_base.sh"]

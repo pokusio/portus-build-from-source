@@ -1,0 +1,163 @@
+version: "3"
+
+services:
+  # ---
+  # The service I use to build the 'portus:2.5' OCI container image
+  # ---
+  portus:
+    # image: opensuse/portus:head
+    image: jbl/portus:2.5
+    command: ["/bin/bash"]
+    stdin_open: true
+    tty: true
+    build:
+      context: oci/portus-image-def/
+      args:
+        # - MACHINE_FQDN=$MACHINE_FQDN
+        - PORTUS_MACHINE_FQDN_VALUE=${PORTUS_SERVICE_FQDN}
+        - PORTUS_SERVICE_FQDN_VALUE=${PORTUS_SERVICE_FQDN}
+        # DB. The password for the database should definitely not be here. You are
+        # probably better off with Docker Swarm secrets.
+        - PORTUS_DB_HOST=db
+        - PORTUS_DB_DATABASE=portus_production
+        - PORTUS_DB_PASSWORD=${DATABASE_PASSWORD}
+        - PORTUS_DB_POOL=5
+
+        # Secrets. It can possibly be handled better with Swarm's secrets.
+        # - PORTUS_SECRET_KEY_BASE=${SECRET_KEY_BASE}
+        - PORTUS_SECRET_KEY_BASE_FILE=/secrets/rails/$PORTUS_SECRET_KEY_BASE_FILE_NAME
+        # ce secret est en rotation parce que toujours égal à $PORTUS_PUMA_TLS_KEY dans notre conception d'infra.
+        # Il serait tout de même intéressant de faire l'expérience
+        # d'essayer d'utiliser une clef privée différente.
+        # Cette clef est sûrement celle utilisée pour signer les
+        # token portus. le registry vérifie alors la signature des
+        # token grâce au certficat public `$PORTUS_PUMA_TLS_CERT`.
+        # enfin le regsitry doit définir comme "de confiance", l'autorité de certfication
+        # ayant signé le certificat SSL/TLS public `$PORTUS_PUMA_TLS_CERT`
+        - PORTUS_KEY_PATH=/secrets/certificates/portus.key
+        - PORTUS_PASSWORD=${PORTUS_PASSWORD}
+
+        # SSL
+        - PORTUS_PUMA_TLS_KEY=/secrets/certificates/portus.key
+        - PORTUS_PUMA_TLS_CERT=/secrets/certificates/portus.crt
+        # RAILS conf, see :
+        # https://github.com/openSUSE/docker-containers/issues/103#issuecomment-384888245
+        - RAILS_SERVE_STATIC_FILES='true'
+        - RAILS_SERVE_STATIC_ASSETS='true'
+        # debug
+        - PORTUS_LOG_LEVEL=debug
+        # NGinx is serving the assets instead of Puma. If you want to change this,
+        # uncomment this line.
+        #- RAILS_SERVE_STATIC_FILES='true'
+        #
+        # --- CLAIR SCANNER @[clair.pegasusio.io]
+        # http://port.us.org/features/6_security_scanning.html#intro
+        # http for test MUST HAVE AN SSL TLS CERTIFICATE
+        - PORTUS_SECURITY_CLAIR_SERVER=http://clair.pegasusio.io:6060
+        # - PORTUS_SECURITY_CLAIR_SERVER=https://clair.pegasusio.io:6060
+
+        - PORTUS_SECURITY_CLAIR_HEALTH_PORT=6061
+        - PORTUS_SECURITY_CLAIR_TIMEOUT=900s
+    # volumes:
+      # $PORTUS_SECRET_KEY_BASE_GEN_PATH is a subfolder of ./secrets
+      # - $PORTUS_SECRET_KEY_BASE_GEN_PATH:/secrets/rails/${PORTUS_SECRET_KEY_BASE_FILE_NAME}:ro
+      # - static:/srv/Portus/public
+      # - ./portus_background/init-pki:/init-pki:ro
+    networks:
+      - pipeline_portus
+#     healthcheck:
+#       test: ["CMD", "/bin/bash", '-c', 'curl --fail http://localhost:3000/ || exit 1']
+#       interval: 10s
+#       timeout: 5s
+#       retries: 5
+  portus_frontend_buildfromsrc:
+    image: jbl/frontend_buildfromsrc:portus-2.5
+    build:
+      # context: secrets-management/rails_secret_base_key
+      context: oci/frontend/
+      args:
+        # ---
+        # Actually, we change the Dockerfile, to
+        # change ruby version.
+        # But we still keep the infos in the build args, so that
+        # it can be used as container meta-data
+        # ---
+        - RUBY_VERSION=2.5.0
+        - RAILS_VERSION=5.0.1
+        # - PORTUS_SOURCE_CODE_VERSION=2.4.3
+        # - PORTUS_SOURCE_CODE_VERSION=2.5
+        - PORTUS_SOURCE_CODE_VERSION=HEAD
+        - HTTP_URI_TO_PORTUS_PUBLIC_GIT_REPO=https://github.com/SUSE/Portus
+    environment:
+
+      # The container will store the generated secret base key intoa file with thisname, inside
+      # the [/usr/src/portusecretkeybase/generator] folder.
+      #
+      - CCC=$CCC
+    volumes:
+      - $PWD/oci/portus-image-def/built-portus/:/portus/dev/share:rw
+      # - $PWD/secrets-management/rails_secret_base_key/.generation/portus:/usr/src/portusecretkeybase/share
+
+      # I don't use NGINX as a reverse proxy anymore. I use Traefik instead
+      # - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      # - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+
+# --->>>>TESTDB to testthe built protus application
+  db:
+    image: library/mariadb:10.0.23
+    command: mysqld --character-set-server=utf8 --collation-server=utf8_unicode_ci --init-connect='SET NAMES UTF8;' --innodb-flush-log-at-trx-commit=0
+    environment:
+      - MYSQL_DATABASE=portus_production
+      # Again, the password shouldn't be handled like this.
+      - MYSQL_ROOT_PASSWORD=${DATABASE_PASSWORD}
+    volumes:
+      - /var/lib/portus/mariadb:/var/lib/mysql
+    networks:
+      pipeline_portus:
+        aliases:
+         - db.pegasusio.io
+    # https://docs.docker.com/compose/compose-file/#extra_hosts
+    extra_hosts:
+      - "oci-registry.pegasusio.io:DOCKER_HOST_IP_ADDR_JINJA2_VAR"
+      - "portus.pegasusio.io:DOCKER_HOST_IP_ADDR_JINJA2_VAR"
+
+
+  portusctl:
+    # image: opensuse/portus:head
+    image: jbl/portus:2.5
+    command: ["/bin/bash"]
+    stdin_open: true
+    tty: true
+    restart: always
+    build:
+      context: oci/portusctl-image-def/
+      args:
+        # - MACHINE_FQDN=$MACHINE_FQDN
+        - GOLANG_VERSION=${GOLANG_VERSION}
+    environment:
+      # ---
+      # Can be a commit hash, or a tag, (but not a
+      # branch name, could be if we reset 'PORTUSCTL_COMMIT_ID', right
+      # after git checkout, the PORTUSCTL_COMMIT_ID is the
+      # last commit on the checked out branch.)
+      # ---
+      - PORTUSCTL_COMMIT_ID=$PORTUSCTL_COMMIT_ID
+      - PORTUSCTL_VERSION=$PORTUSCTL_VERSION
+    volumes:
+      - $PWD/portusctl:/secrets/rails/${PORTUS_SECRET_KEY_BASE_FILE_NAME}:ro
+      # - $PWD/portusctl/init-pki:/init-pki:ro
+    networks:
+      - pipeline_portus
+    healthcheck:
+      test: ["CMD", "/bin/bash", '-c', '/lab/portusctl/bin/portusctl --version || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  static:
+    driver: local
+
+networks:
+  pipeline_portus:
+    driver: bridge
