@@ -26,7 +26,7 @@ ENV COMPOSE=1
 
 # Install the entrypoint of this image.
 COPY init /
-
+RUN chmod +x /init
 WORKDIR /srv/Portus
 
 # ------------------------------------------------------v
