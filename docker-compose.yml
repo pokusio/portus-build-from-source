@@ -96,12 +96,11 @@ services:
         #   a mirror of official https://github.com/SUSE/Portus
         # -----
         - HTTP_URI_TO_PORTUS_PUBLIC_GIT_REPO=https://gitlab.com/pokus-io/opensuse/Portus.git
-    environment:
-
+    # environment:
       # The container will store the generated secret base key intoa file with thisname, inside
       # the [/usr/src/portusecretkeybase/generator] folder.
       #
-      - CCC=$CCC
+      # - CCC=$CCC
     volumes:
       - $PWD/oci/portus-image-def/built-portus/:/portus/dev/share:rw
       # - $PWD/secrets-management/rails_secret_base_key/.generation/portus:/usr/src/portusecretkeybase/share

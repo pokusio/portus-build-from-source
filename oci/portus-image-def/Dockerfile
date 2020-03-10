@@ -201,7 +201,7 @@ RUN apt-get install graphviz -y
 # RUN bundler install --deployment && bundler package --all
 
 EXPOSE 3000
-# ENTRYPOINT ["/init"]
+ENTRYPOINT ["/init"]
 
 
 # --------------------------------------------------------------
