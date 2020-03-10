@@ -90,7 +90,12 @@ services:
         # - PORTUS_SOURCE_CODE_VERSION=2.4.3
         # - PORTUS_SOURCE_CODE_VERSION=2.5
         - PORTUS_SOURCE_CODE_VERSION=HEAD
-        - HTTP_URI_TO_PORTUS_PUBLIC_GIT_REPO=https://github.com/SUSE/Portus
+        # -----
+        # - HTTP_URI_TO_PORTUS_PUBLIC_GIT_REPO=https://github.com/SUSE/Portus
+        #   Pokus's Team set up https://gitlab.com/pokus-io/opensuse/Portus.git as
+        #   a mirror of official https://github.com/SUSE/Portus
+        # -----
+        - HTTP_URI_TO_PORTUS_PUBLIC_GIT_REPO=https://gitlab.com/pokus-io/opensuse/Portus.git
     environment:
 
       # The container will store the generated secret base key intoa file with thisname, inside
