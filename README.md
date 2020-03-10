@@ -50,7 +50,7 @@ docker-compose build portus
 
 echo "Now running The Portus Ruby On Rails app inside a container from the OCI built image containing Portus built and ready-to-run"
 docker-compose up -d portus && docker-compose logs -f portus
- 
+
 ```
 
 # Building `portusctl` from source
