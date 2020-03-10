@@ -7,9 +7,9 @@ services:
   portus:
     # image: opensuse/portus:head
     image: jbl/portus:2.5
-    command: ["/bin/bash"]
-    stdin_open: true
-    tty: true
+    # command: ["/bin/bash"]
+    # stdin_open: true
+    # tty: true
     restart: always
     build:
       context: oci/portus-image-def/
