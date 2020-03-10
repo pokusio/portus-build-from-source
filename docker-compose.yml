@@ -151,7 +151,7 @@ services:
       - PORTUSCTL_COMMIT_ID=$PORTUSCTL_COMMIT_ID
       - PORTUSCTL_VERSION=$PORTUSCTL_VERSION
     volumes:
-      - $PWD/portusctl:/secrets/rails/${PORTUS_SECRET_KEY_BASE_FILE_NAME}:ro
+      - $PWD/portusctl:/lab/portusctl:ro
       # - $PWD/portusctl/init-pki:/init-pki:ro
     networks:
       - pipeline_portus
