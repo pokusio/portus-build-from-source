@@ -10,6 +10,7 @@ services:
     command: ["/bin/bash"]
     stdin_open: true
     tty: true
+    restart: always
     build:
       context: oci/portus-image-def/
       args:
@@ -63,6 +64,8 @@ services:
       # - $PORTUS_SECRET_KEY_BASE_GEN_PATH:/secrets/rails/${PORTUS_SECRET_KEY_BASE_FILE_NAME}:ro
       # - static:/srv/Portus/public
       # - ./portus_background/init-pki:/init-pki:ro
+    ports:
+      - 3000:3000
     networks:
       - pipeline_portus
 #     healthcheck:

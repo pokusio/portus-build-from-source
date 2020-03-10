@@ -20,9 +20,10 @@ The build process consist essentially of dependency resolution, and "bundling", 
 ```bash
 export WORK_FOLDER=~/.buildfromsrc.portus
 export SSH_URI_TO_THIS_RECIPE_GIT=git@github.com:pokusio/portus-build-from-source.git
-export SSH_URI_TO_THIS_RECIPE_GIT=https://github.com/pokusio/portus-build-from-source.git
+export HTTP_URI_TO_THIS_RECIPE_GIT=https://github.com/pokusio/portus-build-from-source.git
 
-git clone $SSH_URI_TO_THIS_RECIPE_GIT $WORK_FOLDER
+# git clone $SSH_URI_TO_THIS_RECIPE_GIT $WORK_FOLDER
+git clone $HTTP_URI_TO_THIS_RECIPE_GIT $WORK_FOLDER
 
 cd $WORK_FOLDER/build-from-source
 
@@ -43,8 +44,13 @@ docker-compose down --rmi all && docker system prune -f --all && docker system p
 echo "Result of the build of frontend in [$(pwd)/oci/portus-image-def/built-portus/] survives the disk space cleanup"
 ls -allh $(pwd)/oci/portus-image-def/built-portus/
 
-echo "Now building an image"
+echo "Now building an OCI image in which The Portus Ruby On Rails app is built, and in which we can start Portus"
 docker-compose build portus
+
+
+echo "Now running The Portus Ruby On Rails app inside a container from the OCI built image containing Portus built and ready-to-run"
+docker-compose up -d portus && docker-compose logs -f portus
+ 
 ```
 
 # Building `portusctl` from source
