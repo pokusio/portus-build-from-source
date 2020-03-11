@@ -1,0 +1,11 @@
+version: 1
+update_configs:
+  - package_manager: "docker"
+    directory: "oci/frontend"
+    update_schedule: "daily"
+  - package_manager: "docker"
+    directory: "oci/portus-image-def"
+    update_schedule: "daily"
+  - package_manager: "docker"
+    directory: "oci/portusctl-image-def"
+    update_schedule: "daily"
