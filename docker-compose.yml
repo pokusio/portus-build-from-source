@@ -140,6 +140,8 @@ services:
       context: oci/portusctl-image-def/
       args:
         # - MACHINE_FQDN=$MACHINE_FQDN
+        - GOLANG_CPU_ARCH=${GOLANG_VERSION}
+        - GOLANG_OS=${GOLANG_VERSION}
         - GOLANG_VERSION=${GOLANG_VERSION}
     environment:
       # ---
