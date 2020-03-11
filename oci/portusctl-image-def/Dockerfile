@@ -23,8 +23,11 @@ FROM ruby:2.6.0-stretch
 #
 
 
-
-
+# We will build [portusctl] inside '/lab/portusctl'
+RUN mkdir -p /lab/portusctl
+# Once [portusctl] is built, we will copy the binary to '/lab/share'
+RUN mkdir -p /lab/share
+VOLUME /lab/share
 WORKDIR /lab/portusctl
 
 # ------------------------------------------------------v
@@ -32,8 +35,8 @@ WORKDIR /lab/portusctl
 
 # 1./ Install latest go version : picked from suse team dockerfile : [GOLANG_VERSION=1.10]
 ARG GOLANG_VERSION=${GOLANG_VERSION:-'1.10'}
-ARG GOLANG_OS=linux
-ARG GOLANG_CPU_ARCH=amd64
+ARG GOLANG_OS=${GOLANG_OS:-'linux'}
+ARG GOLANG_CPU_ARCH=${GOLANG_CPU_ARCH:-'amd64'}
 # installing golang version
 RUN curl https://dl.google.com/go/go${GOLANG_VERSION}.${GOLANG_OS}-${GOLANG_CPU_ARCH}.tar.gz -o go${GOLANG_VERSION}.${GOLANG_OS}-${GOLANG_CPU_ARCH}.tar.gz
 RUN tar -C /usr/local -xzf go${GOLANG_VERSION}.${GOLANG_OS}-${GOLANG_CPU_ARCH}.tar.gz
