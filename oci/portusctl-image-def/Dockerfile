@@ -23,8 +23,11 @@ FROM ruby:2.6.0-stretch
 #
 
 
-
-
+# We will build [portusctl] inside '/lab/portusctl'
+RUN mkdir -p /lab/portusctl
+# Once [portusctl] is built, we will copy the binary to '/lab/share'
+RUN mkdir -p /lab/share
+VOLUME /lab/share
 WORKDIR /lab/portusctl
 
 # ------------------------------------------------------v

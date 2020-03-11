@@ -52,3 +52,5 @@ make install
 echo "building portusctl from source worked"
 
 ./vendor/bin/portusctl --version
+
+cp ./vendor/bin/portusctl /lab/share
